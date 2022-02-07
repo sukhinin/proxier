@@ -1,0 +1,3 @@
+rootProject.name = 'proxier'
+include 'proxier-client'
+include 'proxier-server'

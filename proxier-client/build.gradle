@@ -1,0 +1,20 @@
+plugins {
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.0'
+}
+
+group parent.group
+version parent.version
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.slf4j:slf4j-simple:1.7.35"
+
+    implementation "io.netty:netty-handler:4.1.73.Final"
+    implementation "io.netty:netty-codec-socks:4.1.73.Final"
+}

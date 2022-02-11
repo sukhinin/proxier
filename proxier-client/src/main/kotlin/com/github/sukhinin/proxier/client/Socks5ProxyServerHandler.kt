@@ -64,7 +64,11 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
                 msg.dstAddrType(), msg.dstAddr(), msg.dstPort()
             )
             ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener {
+                ctx.pipeline().remove(Socks5ServerEncoder::class.java)
+                ctx.pipeline().remove(Socks5InitialRequestDecoder::class.java)
+                ctx.pipeline().remove(Socks5CommandRequestDecoder::class.java)
                 ctx.pipeline().remove(this)
+
                 ctx.pipeline().addLast(BackPressureHandler(ch))
                 ctx.pipeline().addLast(RelayHandler(ch))
                 ch.pipeline().addLast(BackPressureHandler(ctx.channel()))

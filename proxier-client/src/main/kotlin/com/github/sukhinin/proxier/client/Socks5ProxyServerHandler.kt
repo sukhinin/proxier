@@ -6,11 +6,14 @@ import com.github.sukhinin.proxier.netty.ChannelUtils.flushAndClose
 import com.github.sukhinin.proxier.netty.RelayHandler
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.*
+import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.socksx.SocksMessage
 import io.netty.handler.codec.socksx.v5.*
+import io.netty.handler.proxy.HttpProxyHandler
 import io.netty.util.concurrent.FutureListener
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
 
 class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
 
@@ -49,7 +52,14 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(ChannelActivationHandler(promise))
+            .handler(object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(ch: SocketChannel) {
+                    ch.pipeline().addLast(
+                        HttpProxyHandler(InetSocketAddress("localhost", 3128)),
+                        ChannelActivationHandler(promise)
+                    )
+                }
+            })
 
         bootstrap.connect(msg.dstAddr(), msg.dstPort()).addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {

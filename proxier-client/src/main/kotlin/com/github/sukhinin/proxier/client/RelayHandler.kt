@@ -1,5 +1,6 @@
 package com.github.sukhinin.proxier.client
 
+import com.github.sukhinin.proxier.client.ChannelUtils.flushAndClose
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -7,7 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.ReferenceCountUtil
 import org.slf4j.LoggerFactory
 
-class RelayHandler(private val relayChannel: Channel) : ChannelInboundHandlerAdapter() {
+class RelayHandler(private val outbound: Channel) : ChannelInboundHandlerAdapter() {
 
     private val logger = LoggerFactory.getLogger(RelayHandler::class.java)
 
@@ -16,19 +17,19 @@ class RelayHandler(private val relayChannel: Channel) : ChannelInboundHandlerAda
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        SocketServerUtils.closeOnFlush(relayChannel)
+        outbound.flushAndClose()
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-        if (relayChannel.isActive) {
-            relayChannel.writeAndFlush(msg)
+        if (outbound.isActive) {
+            outbound.writeAndFlush(msg)
         } else {
             ReferenceCountUtil.release(msg)
         }
     }
 
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        logger.error("Error processing socks message", cause)
-        SocketServerUtils.closeOnFlush(ctx.channel())
+        logger.error("${ctx.channel()} Exception caught", cause)
+        outbound.flushAndClose()
     }
 }

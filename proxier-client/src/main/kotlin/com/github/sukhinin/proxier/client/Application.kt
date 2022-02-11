@@ -17,11 +17,10 @@ object Application {
 
         try {
             val bootstrap = ServerBootstrap()
-            bootstrap
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel::class.java)
-                .handler(LoggingHandler(LogLevel.INFO))
-                .childHandler(SocksServerInitializer())
+                .handler(LoggingHandler(LogLevel.DEBUG))
+                .childHandler(Socks5ServerInitializer())
             bootstrap
                 .bind(SOCKS_PROXY_PORT).sync()
                 .channel().closeFuture().sync()

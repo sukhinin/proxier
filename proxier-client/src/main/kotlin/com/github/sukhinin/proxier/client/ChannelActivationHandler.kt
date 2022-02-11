@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.concurrent.Promise
 
-class DirectClientHandler(private val promise: Promise<Channel>) : ChannelInboundHandlerAdapter() {
+class ChannelActivationHandler(private val promise: Promise<Channel>) : ChannelInboundHandlerAdapter() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         ctx.pipeline().remove(this)

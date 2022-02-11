@@ -12,8 +12,10 @@ repositories {
 }
 
 dependencies {
+    implementation project(":proxier-common")
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.0"
     implementation "org.slf4j:slf4j-simple:1.7.35"
+    implementation "com.google.guava:guava:31.0.1-jre"
     implementation "io.netty:netty-handler:4.1.74.Final"
     implementation "io.netty:netty-codec-http:4.1.74.Final"
 }

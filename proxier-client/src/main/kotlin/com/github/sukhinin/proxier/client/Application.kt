@@ -8,7 +8,7 @@ import io.netty.handler.logging.LoggingHandler
 
 object Application {
 
-    private const val SOCKS_PROXY_PORT = 3128
+    private const val SOCKS_PROXY_PORT = 1080
 
     @JvmStatic
     fun main(args: Array<String>) {

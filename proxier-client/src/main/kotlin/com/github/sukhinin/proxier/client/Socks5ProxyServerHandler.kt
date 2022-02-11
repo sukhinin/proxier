@@ -39,8 +39,8 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
         val promise = ctx.executor().newPromise<Channel>()
         promise.addListener(FutureListener { future ->
             when (future.isSuccess) {
-                true -> handleClientConnectionEstablished(ctx, msg, future.now)
-                else -> handleClientConnectionFailed(ctx, msg)
+                true -> handleOutboundConnectionEstablished(ctx, msg, future.now)
+                else -> handleOutboundConnectionFailed(ctx, msg)
             }
         })
 
@@ -53,14 +53,12 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
 
         bootstrap.connect(msg.dstAddr(), msg.dstPort()).addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
-                val response = DefaultSocks5CommandResponse(Socks5CommandStatus.FAILURE, msg.dstAddrType())
-                ctx.channel().write(response)
-                ctx.channel().flushAndClose()
+                handleOutboundConnectionFailed(ctx, msg)
             }
         })
     }
 
-    private fun handleClientConnectionEstablished(ctx: ChannelHandlerContext, msg: Socks5CommandRequest, ch: Channel) {
+    private fun handleOutboundConnectionEstablished(ctx: ChannelHandlerContext, msg: Socks5CommandRequest, ch: Channel) {
             val response = DefaultSocks5CommandResponse(
                 Socks5CommandStatus.SUCCESS,
                 msg.dstAddrType(), msg.dstAddr(), msg.dstPort()
@@ -74,7 +72,7 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
             })
     }
 
-    private fun handleClientConnectionFailed(ctx: ChannelHandlerContext, msg: Socks5CommandRequest) {
+    private fun handleOutboundConnectionFailed(ctx: ChannelHandlerContext, msg: Socks5CommandRequest) {
         val response = DefaultSocks5CommandResponse(Socks5CommandStatus.FAILURE, msg.dstAddrType())
         ctx.channel().writeAndFlush(response)
         ctx.channel().flushAndClose()
@@ -85,7 +83,7 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
     }
 
     private fun handleUnexpectedMessage(ctx: ChannelHandlerContext, msg: SocksMessage) {
-        logger.error("${ctx.channel()} Unexpected SOCKS5 message: $msg")
+        logger.error("${ctx.channel()} Unexpected message: $msg")
         ctx.close()
     }
 

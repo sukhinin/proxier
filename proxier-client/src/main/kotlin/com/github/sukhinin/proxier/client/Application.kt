@@ -20,7 +20,7 @@ object Application {
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel::class.java)
                 .handler(LoggingHandler(LogLevel.DEBUG))
-                .childHandler(Socks5ServerInitializer())
+                .childHandler(Socks5ProxyServerInitializer())
             bootstrap
                 .bind(SOCKS_PROXY_PORT).sync()
                 .channel().closeFuture().sync()

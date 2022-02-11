@@ -12,9 +12,9 @@ import io.netty.handler.codec.socksx.v5.*
 import io.netty.util.concurrent.FutureListener
 import org.slf4j.LoggerFactory
 
-class Socks5ServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
+class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
 
-    private val logger = LoggerFactory.getLogger(Socks5ServerHandler::class.java)
+    private val logger = LoggerFactory.getLogger(Socks5ProxyServerHandler::class.java)
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: SocksMessage) {
         when (msg) {

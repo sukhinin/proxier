@@ -1,6 +1,6 @@
-package com.github.sukhinin.proxier.client
+package com.github.sukhinin.proxier.netty
 
-import com.github.sukhinin.proxier.client.ChannelUtils.flushAndClose
+import com.github.sukhinin.proxier.netty.ChannelUtils.flushAndClose
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext

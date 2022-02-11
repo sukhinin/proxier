@@ -1,4 +1,4 @@
-package com.github.sukhinin.proxier.client
+package com.github.sukhinin.proxier.netty
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel

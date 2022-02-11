@@ -1,6 +1,9 @@
 package com.github.sukhinin.proxier.client
 
-import com.github.sukhinin.proxier.client.ChannelUtils.flushAndClose
+import com.github.sukhinin.proxier.netty.BackPressureHandler
+import com.github.sukhinin.proxier.netty.ChannelActivationHandler
+import com.github.sukhinin.proxier.netty.ChannelUtils.flushAndClose
+import com.github.sukhinin.proxier.netty.RelayHandler
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.*
 import io.netty.channel.socket.nio.NioSocketChannel

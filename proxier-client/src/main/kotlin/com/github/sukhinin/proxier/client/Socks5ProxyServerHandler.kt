@@ -13,7 +13,6 @@ import io.netty.handler.codec.socksx.v5.*
 import io.netty.handler.proxy.HttpProxyHandler
 import io.netty.util.concurrent.FutureListener
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
 
 class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
 
@@ -47,6 +46,9 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
             }
         })
 
+        val serverAddress = ctx.channel().attr(Attributes.serverAddress).get()
+        val clientSslContext = ctx.channel().attr(Attributes.clientSslContext).get()
+
         val bootstrap = Bootstrap()
             .group(ctx.channel().eventLoop())
             .channel(NioSocketChannel::class.java)
@@ -55,7 +57,8 @@ class Socks5ProxyServerHandler : SimpleChannelInboundHandler<SocksMessage>() {
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     ch.pipeline().addLast(
-                        HttpProxyHandler(InetSocketAddress("localhost", 3128)),
+                        clientSslContext.newHandler(ch.alloc()),
+                        HttpProxyHandler(serverAddress.toInetSocketAddress()),
                         ChannelActivationHandler(promise)
                     )
                 }

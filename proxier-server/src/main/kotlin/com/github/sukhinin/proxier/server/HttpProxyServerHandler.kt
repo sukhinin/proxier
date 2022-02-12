@@ -4,19 +4,13 @@ import com.github.sukhinin.proxier.netty.BackPressureHandler
 import com.github.sukhinin.proxier.netty.ChannelActivationHandler
 import com.github.sukhinin.proxier.netty.ChannelUtils.flushAndClose
 import com.github.sukhinin.proxier.netty.RelayHandler
-import com.google.common.net.HostAndPort
+import com.github.sukhinin.proxier.utils.HostAndPort
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFutureListener
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelOption
-import io.netty.channel.SimpleChannelInboundHandler
+import io.netty.channel.*
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.util.concurrent.FutureListener
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
-import java.net.URI
 
 class HttpProxyServerHandler : SimpleChannelInboundHandler<HttpObject>() {
 
@@ -61,7 +55,7 @@ class HttpProxyServerHandler : SimpleChannelInboundHandler<HttpObject>() {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(ChannelActivationHandler(promise))
 
-        val hostAndPort = HostAndPort.fromString(msg.uri())
+        val hostAndPort = HostAndPort.parse(msg.uri())
         bootstrap.connect(hostAndPort.host, hostAndPort.port).addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
                 handleOutboundConnectionFailed(ctx, msg)

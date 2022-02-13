@@ -17,8 +17,6 @@ import kotlin.system.exitProcess
 
 object Application {
 
-    private const val DEFAULT_SOCKS_PROXY_PORT = 1080
-
     private val logger = LoggerFactory.getLogger(Application::class.java)
 
     @JvmStatic
@@ -69,7 +67,6 @@ object Application {
 
         parser.addArgument("--proxy.socks.port").metavar("PORT")
             .type(Integer::class.java)
-            .setDefault(DEFAULT_SOCKS_PROXY_PORT)
             .help("run SOCKS5 proxy on this port")
 
         return try {

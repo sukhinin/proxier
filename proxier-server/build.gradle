@@ -17,6 +17,7 @@ dependencies {
     implementation "org.slf4j:slf4j-simple:1.7.35"
     implementation "net.sourceforge.argparse4j:argparse4j:0.9.0"
     implementation "com.github.sukhinin:simple-config:4.0.2"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.13.1"
     implementation "io.netty:netty-handler:4.1.74.Final"
     implementation "io.netty:netty-codec-http:4.1.74.Final"
 }

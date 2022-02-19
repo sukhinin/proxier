@@ -14,4 +14,8 @@ data class HostAndPort(val host: String, val port: Int) {
     fun toInetSocketAddress(): InetSocketAddress {
         return InetSocketAddress(host, port)
     }
+
+    override fun toString(): String {
+        return "$host:$port"
+    }
 }

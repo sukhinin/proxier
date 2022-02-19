@@ -1,11 +1,11 @@
 package com.github.sukhinin.proxier.server
 
+import com.github.sukhinin.proxier.server.authc.AuthenticationConfigResolver
+import com.github.sukhinin.proxier.server.authc.AuthenticationService
 import com.github.sukhinin.simpleconfig.*
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.logging.LogLevel
-import io.netty.handler.logging.LoggingHandler
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
 import net.sourceforge.argparse4j.ArgumentParsers
@@ -24,16 +24,19 @@ object Application {
         val ns = parseCommandLineArgs(args)
         val config = getApplicationConfig(ns)
 
+        val authenticationConfig = AuthenticationConfigResolver.resolve(config)
+        val authenticationService = AuthenticationService(authenticationConfig)
+
         val bossGroup = NioEventLoopGroup(1)
         val workerGroup = NioEventLoopGroup()
         try {
             val bootstrap = ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel::class.java)
-                .handler(LoggingHandler(LogLevel.DEBUG))
-                .childHandler(HttpProxyServerInitializer())
+                .childHandler(HttpChannelInitializer())
             bootstrap
                 .childAttr(Attributes.serverSslContext, getServerSslContext(config))
+                .childAttr(Attributes.authenticationService, authenticationService)
             bootstrap
                 .bind(config.getInteger("server.port")).sync()
                 .channel().closeFuture().sync()

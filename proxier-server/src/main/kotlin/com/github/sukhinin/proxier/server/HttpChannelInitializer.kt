@@ -4,7 +4,7 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.http.HttpServerCodec
 
-class HttpProxyServerInitializer : ChannelInitializer<SocketChannel>() {
+class HttpChannelInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         val serverSslContext = ch.attr(Attributes.serverSslContext).get()
         if (serverSslContext != null) {
@@ -13,7 +13,7 @@ class HttpProxyServerInitializer : ChannelInitializer<SocketChannel>() {
 
         ch.pipeline().addLast(
             HttpServerCodec(),
-            HttpProxyServerHandler()
+            HttpDispatcherHandler()
         )
     }
 }

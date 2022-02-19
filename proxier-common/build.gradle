@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.0"
-    implementation "org.slf4j:slf4j-api:1.7.33"
+    implementation 'org.slf4j:slf4j-api:1.7.35'
+    implementation "com.github.sukhinin:simple-config:4.0.2"
     implementation "io.netty:netty-handler:4.1.74.Final"
 }

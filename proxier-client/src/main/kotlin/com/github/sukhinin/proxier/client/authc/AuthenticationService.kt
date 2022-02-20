@@ -1,7 +1,5 @@
 package com.github.sukhinin.proxier.client.authc
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.sukhinin.proxier.authc.ClientAuthenticationConfig
 import com.github.sukhinin.proxier.http.HttpUtils.formEncode
 import com.github.sukhinin.proxier.http.HttpUtils.urlResolve
@@ -9,22 +7,17 @@ import com.google.common.io.BaseEncoding
 import io.undertow.server.handlers.BlockingHandler
 import io.undertow.util.Headers
 import io.undertow.util.StatusCodes
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
+import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 
 class AuthenticationService(private val config: ClientAuthenticationConfig, private val callbackPath: String) {
 
-    private val challengeGenerator = ChallengeGenerator()
-    private val objectMapper = ObjectMapper()
-    private val httpClient = HttpClient.newBuilder()
-        .followRedirects(HttpClient.Redirect.NORMAL)
-        .build()
+    private val tokenExpirationMargin = Duration.ofSeconds(30)
 
+    private val logger = LoggerFactory.getLogger(AuthenticationService::class.java)
+    private val challengeGenerator = ChallengeGenerator()
     private val tokensRef = AtomicReference<Tokens?>()
 
     fun authenticationRequestHandler() = BlockingHandler { exchange ->
@@ -53,7 +46,7 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         val state = requireNotNull(exchange.queryParameters["state"]?.single()) { "Missing query parameter: state" }
         val code = requireNotNull(exchange.queryParameters["code"]?.single()) { "Missing query parameter: code" }
 
-        val tokens = getTokens(exchange.requestURL, state, code)
+        val tokens = retrieveTokens(exchange.requestURL, state, code)
         tokensRef.set(tokens)
 
         exchange.statusCode = 200
@@ -62,7 +55,9 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         exchange.endExchange()
     }
 
-    internal fun getTokens(requestUrl: String, state: String, code: String): Tokens {
+    internal fun retrieveTokens(requestUrl: String, state: String, code: String): Tokens {
+        logger.info("Retrieving tokens")
+
         val seed = BaseEncoding.base64Url().decode(state)
         val verifier = challengeGenerator.generateVerifier(seed)
 
@@ -73,7 +68,10 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         params["redirect_uri"] = urlResolve(requestUrl, callbackPath)
         params["code_verifier"] = verifier
 
-        val json = wrapAuthenticationExceptions("Failed to retrieve tokens") { callTokenEndpoint(params) }
+        val json = wrapAuthenticationExceptions("Failed to retrieve tokens") {
+            RemoteEndpoint.call(config.tokenEndpoint, params)
+        }
+
         val refreshToken = json.path("refresh_token").textValue()
         val accessToken = json.path("access_token").textValue()
         val expiresAfter = json.path("expires_in").longValue()
@@ -87,17 +85,24 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         return Tokens(refreshToken, accessToken, Duration.ofSeconds(expiresAfter), Instant.now())
     }
 
-    internal fun refreshTokens(tokens: Tokens?): Tokens {
-        if (tokens == null) {
-            throw AuthenticationException("Authentication required")
-        }
+    fun getAccessToken(): String {
+        val tokens = tokensRef.get() ?: throw AuthenticationException("Authentication required")
+        val expired = tokens.timestamp + tokens.expiresAfter - tokenExpirationMargin < Instant.now()
+        return if (expired) refreshTokens(tokens).also(tokensRef::set).access else tokens.access
+    }
+
+    internal fun refreshTokens(tokens: Tokens): Tokens {
+        logger.info("Refreshing access token")
 
         val params = HashMap<String, String>()
         params["client_id"] = config.clientId
         params["grant_type"] = "refresh_token"
         params["refresh_token"] = tokens.refresh
 
-        val json = wrapAuthenticationExceptions("Failed to refresh tokens") { callTokenEndpoint(params) }
+        val json = wrapAuthenticationExceptions("Failed to refresh tokens") {
+            RemoteEndpoint.call(config.tokenEndpoint, params)
+        }
+
         val accessToken = json.path("access_token").textValue()
         val refreshToken = json.path("refresh_token").asText(tokens.refresh)
         val expiresAfter = json.path("expires_in").asLong(tokens.expiresAfter.toSeconds())
@@ -117,30 +122,6 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         } catch (e: Exception) {
             throw AuthenticationException(genericErrorMessage, e)
         }
-    }
-
-    internal fun callTokenEndpoint(params: Map<String, String>): JsonNode {
-        val req = HttpRequest.newBuilder()
-            .uri(URI.create(config.tokenEndpoint))
-            .POST(HttpRequest.BodyPublishers.ofString(formEncode(params)))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .timeout(Duration.ofSeconds(5))
-            .build()
-
-        val res = httpClient.send(req, HttpResponse.BodyHandlers.ofByteArray())
-        if (res.statusCode() !in 200..299) {
-            val message = try {
-                val json = objectMapper.readTree(res.body())
-                val error = requireNotNull(json.path("error").textValue())
-                val description = json.path("error_description").textValue()
-                if (description == null) error else "$description ($error)"
-            } catch (e: Exception) {
-                "Bad HTTP response: code ${res.statusCode()}"
-            }
-            throw AuthenticationException(message)
-        }
-
-        return objectMapper.readTree(res.body())
     }
 
     internal data class Tokens(

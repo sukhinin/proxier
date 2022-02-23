@@ -28,7 +28,7 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         params["state"] = BaseEncoding.base64Url().encode(seed)
         params["code_challenge"] = challenge
         params["code_challenge_method"] = challengeGenerator.getMethod()
-        params["scope"] = "openid"
+        params["scope"] = config.clientScope
 
         return config.authorizationEndpoint + "?" + formEncode(params)
     }

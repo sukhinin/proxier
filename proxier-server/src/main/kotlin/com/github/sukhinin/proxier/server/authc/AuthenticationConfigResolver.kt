@@ -32,6 +32,7 @@ object AuthenticationConfigResolver {
         val json = ObjectMapper().readTree(response.body())
         return AuthenticationConfig(
             clientId = config.get("oidc.client.id"),
+            clientScope = config.get("oidc.client.scope"),
             authorizationEndpoint = json.get("authorization_endpoint").asText(),
             tokenEndpoint = json.get("token_endpoint").asText(),
             userInfoEndpoint = json.get("userinfo_endpoint").asText()
@@ -41,6 +42,7 @@ object AuthenticationConfigResolver {
     private fun resolveFromStaticConfig(config: Config): AuthenticationConfig {
         return AuthenticationConfig(
             clientId = config.get("oidc.client.id"),
+            clientScope = config.get("oidc.client.scope"),
             authorizationEndpoint = config.get("oidc.endpoints.authorization"),
             tokenEndpoint = config.get("oidc.endpoints.token"),
             userInfoEndpoint = config.get("oidc.endpoints.userinfo")

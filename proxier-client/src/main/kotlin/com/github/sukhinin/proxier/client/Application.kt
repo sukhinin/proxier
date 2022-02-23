@@ -2,6 +2,7 @@ package com.github.sukhinin.proxier.client
 
 import com.github.sukhinin.proxier.authc.ClientAuthenticationConfig
 import com.github.sukhinin.proxier.authc.ClientAuthenticationConfigSerializer
+import com.github.sukhinin.proxier.client.authc.AuthenticationHandlers
 import com.github.sukhinin.proxier.client.authc.AuthenticationService
 import com.github.sukhinin.proxier.utils.HostAndPort
 import com.github.sukhinin.simpleconfig.*
@@ -45,13 +46,14 @@ object Application {
         logger.info("Retrieved authentication configuration:\n\t" + authenticationConfig.dump().replace("\n", "\n\t"))
 
         val authenticationService = AuthenticationService(authenticationConfig, "/auth/callback")
+        val authenticationHandlers = AuthenticationHandlers(authenticationService)
 
         Undertow.builder()
             .addHttpListener(config.getInteger("web.admin.port"), "localhost")
             .setHandler(
                 Handlers.routing()
-                    .get("/auth", authenticationService.authenticationRequestHandler())
-                    .get("/auth/callback", authenticationService.authenticationCallbackHandler())
+                    .get("/auth", authenticationHandlers.authenticationRequestHandler())
+                    .get("/auth/callback", authenticationHandlers.authenticationCallbackHandler())
             )
             .build().start()
 

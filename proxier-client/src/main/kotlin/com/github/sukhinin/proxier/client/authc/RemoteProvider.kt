@@ -9,7 +9,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 
-object RemoteEndpoint {
+object RemoteProvider {
 
     private val objectMapper = ObjectMapper()
     private val httpClient = HttpClient.newBuilder()

@@ -4,9 +4,6 @@ import com.github.sukhinin.proxier.authc.ClientAuthenticationConfig
 import com.github.sukhinin.proxier.http.HttpUtils.formEncode
 import com.github.sukhinin.proxier.http.HttpUtils.urlResolve
 import com.google.common.io.BaseEncoding
-import io.undertow.server.handlers.BlockingHandler
-import io.undertow.util.Headers
-import io.undertow.util.StatusCodes
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
@@ -20,13 +17,7 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
     private val challengeGenerator = ChallengeGenerator()
     private val tokensRef = AtomicReference<Tokens?>()
 
-    fun authenticationRequestHandler() = BlockingHandler { exchange ->
-        exchange.statusCode = StatusCodes.FOUND
-        exchange.responseHeaders.put(Headers.LOCATION, getRemoteAuthorizationUrl(exchange.requestURL))
-        exchange.endExchange()
-    }
-
-    internal fun getRemoteAuthorizationUrl(requestUrl: String): String {
+    fun getRemoteProviderAuthenticationUrl(requestUrl: String): String {
         val seed = challengeGenerator.generateSeed()
         val challenge = challengeGenerator.generateChallenge(seed)
 
@@ -42,17 +33,8 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         return config.authorizationEndpoint + "?" + formEncode(params)
     }
 
-    fun authenticationCallbackHandler() = BlockingHandler { exchange ->
-        val state = requireNotNull(exchange.queryParameters["state"]?.single()) { "Missing query parameter: state" }
-        val code = requireNotNull(exchange.queryParameters["code"]?.single()) { "Missing query parameter: code" }
-
-        val tokens = retrieveTokens(exchange.requestURL, state, code)
-        tokensRef.set(tokens)
-
-        exchange.statusCode = 200
-        exchange.responseHeaders.put(Headers.CONTENT_TYPE, "text/plain")
-        exchange.responseSender.send("OK")
-        exchange.endExchange()
+    fun authenticate(requestUrl: String, state: String, code: String) {
+        retrieveTokens(requestUrl, state, code).also(tokensRef::set)
     }
 
     internal fun retrieveTokens(requestUrl: String, state: String, code: String): Tokens {
@@ -69,7 +51,7 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         params["code_verifier"] = verifier
 
         val json = wrapAuthenticationExceptions("Failed to retrieve tokens") {
-            RemoteEndpoint.call(config.tokenEndpoint, params)
+            RemoteProvider.call(config.tokenEndpoint, params)
         }
 
         val refreshToken = json.path("refresh_token").textValue()
@@ -100,7 +82,7 @@ class AuthenticationService(private val config: ClientAuthenticationConfig, priv
         params["refresh_token"] = tokens.refresh
 
         val json = wrapAuthenticationExceptions("Failed to refresh tokens") {
-            RemoteEndpoint.call(config.tokenEndpoint, params)
+            RemoteProvider.call(config.tokenEndpoint, params)
         }
 
         val accessToken = json.path("access_token").textValue()

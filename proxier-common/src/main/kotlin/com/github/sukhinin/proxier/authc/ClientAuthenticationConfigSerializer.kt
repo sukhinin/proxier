@@ -1,6 +1,7 @@
 package com.github.sukhinin.proxier.authc
 
 import com.github.sukhinin.proxier.http.HttpUtils
+import java.time.Duration
 
 object ClientAuthenticationConfigSerializer {
 
@@ -8,6 +9,7 @@ object ClientAuthenticationConfigSerializer {
 
     private const val OIDC_CLIENT_ID_FIELD = "oidc.client.id"
     private const val OIDC_CLIENT_SCOPE_FIELD = "oidc.client.scope"
+    private const val OIDC_TOKEN_REFRESH_INTERVAL = "oidc.token.refresh.interval"
     private const val OIDC_AUTHORIZATION_ENDPOINT_FIELD = "oidc.endpoints.authorization"
     private const val OIDC_TOKEN_ENDPOINT_FIELD = "oidc.endpoints.token"
 
@@ -15,6 +17,7 @@ object ClientAuthenticationConfigSerializer {
         val map = HashMap<String, String>()
         map[OIDC_CLIENT_ID_FIELD] = config.clientId
         map[OIDC_CLIENT_SCOPE_FIELD] = config.clientScope
+        map[OIDC_TOKEN_REFRESH_INTERVAL] = config.tokenRefreshInterval.toString()
         map[OIDC_AUTHORIZATION_ENDPOINT_FIELD] = config.authorizationEndpoint
         map[OIDC_TOKEN_ENDPOINT_FIELD] = config.tokenEndpoint
         return HttpUtils.formEncode(map)
@@ -25,6 +28,7 @@ object ClientAuthenticationConfigSerializer {
         return ClientAuthenticationConfig(
             clientId = map.getValue(OIDC_CLIENT_ID_FIELD),
             clientScope = map.getValue(OIDC_CLIENT_SCOPE_FIELD),
+            tokenRefreshInterval = map.getValue(OIDC_TOKEN_REFRESH_INTERVAL).let(Duration::parse),
             authorizationEndpoint = map.getValue(OIDC_AUTHORIZATION_ENDPOINT_FIELD),
             tokenEndpoint = map.getValue(OIDC_TOKEN_ENDPOINT_FIELD),
         )

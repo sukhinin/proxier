@@ -16,18 +16,15 @@ class AuthenticationService(
     private val callbackPath: String
 ) : AutoCloseable {
 
-    private val tokenExpirationMargin = Duration.ofSeconds(30)
-
     private val logger = LoggerFactory.getLogger(AuthenticationService::class.java)
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
     private val challengeGenerator = ChallengeGenerator()
     private val tokensRef = AtomicReference<Tokens?>()
 
     init {
-        val tokenRefreshIntervalSeconds = config.tokenRefreshInterval.toSeconds()
         scheduler.scheduleWithFixedDelay(
             { ignoreAuthenticationExceptions(::refreshTokens) },
-            tokenRefreshIntervalSeconds, tokenRefreshIntervalSeconds, TimeUnit.SECONDS
+            config.tokenRefreshInterval, config.tokenRefreshInterval, TimeUnit.SECONDS
         )
     }
 
@@ -55,7 +52,7 @@ class AuthenticationService(
     @Synchronized
     fun getAccessToken(): String {
         val tokens = tokensRef.get() ?: throw AuthenticationException("Authentication required")
-        if (tokens.timestamp + tokens.expiresAfter - tokenExpirationMargin > Instant.now()) {
+        if (tokens.timestamp + tokens.expiresAfter - Duration.ofSeconds(config.tokenRefreshMargin) > Instant.now()) {
             return tokens.access
         }
         val refreshedTokens = exchangeRefreshTokenForTokens(tokens)

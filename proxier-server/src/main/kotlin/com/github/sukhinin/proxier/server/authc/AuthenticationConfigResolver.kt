@@ -33,7 +33,8 @@ object AuthenticationConfigResolver {
         return AuthenticationConfig(
             clientId = config.get("oidc.client.id"),
             clientScope = config.get("oidc.client.scope"),
-            tokenRefreshInterval = config.get("oidc.token.refresh.interval").let(Duration::parse),
+            tokenRefreshMargin = config.get("oidc.token.refresh.margin").toLong(),
+            tokenRefreshInterval = config.get("oidc.token.refresh.interval").toLong(),
             authorizationEndpoint = json.get("authorization_endpoint").asText(),
             tokenEndpoint = json.get("token_endpoint").asText(),
             userInfoEndpoint = json.get("userinfo_endpoint").asText()
@@ -44,7 +45,8 @@ object AuthenticationConfigResolver {
         return AuthenticationConfig(
             clientId = config.get("oidc.client.id"),
             clientScope = config.get("oidc.client.scope"),
-            tokenRefreshInterval = config.get("oidc.token.refresh.interval").let(Duration::parse),
+            tokenRefreshMargin = config.get("oidc.token.refresh.margin").toLong(),
+            tokenRefreshInterval = config.get("oidc.token.refresh.interval").toLong(),
             authorizationEndpoint = config.get("oidc.endpoints.authorization"),
             tokenEndpoint = config.get("oidc.endpoints.token"),
             userInfoEndpoint = config.get("oidc.endpoints.userinfo")

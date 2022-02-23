@@ -1,11 +1,10 @@
 package com.github.sukhinin.proxier.authc
 
-import java.time.Duration
-
 data class ClientAuthenticationConfig(
     val clientId: String,
     val clientScope: String,
-    val tokenRefreshInterval: Duration,
+    val tokenRefreshMargin: Long,
+    val tokenRefreshInterval: Long,
     val authorizationEndpoint: String,
     val tokenEndpoint: String
 ) {
@@ -13,6 +12,7 @@ data class ClientAuthenticationConfig(
         val builder = StringBuilder()
         builder.appendLine("oidc.client.id=$clientId")
         builder.appendLine("oidc.client.scope=$clientScope")
+        builder.appendLine("oidc.token.refresh.margin=$tokenRefreshMargin")
         builder.appendLine("oidc.token.refresh.interval=$tokenRefreshInterval")
         builder.appendLine("oidc.endpoints.authorization=$authorizationEndpoint")
         builder.appendLine("oidc.endpoints.token=$tokenEndpoint")

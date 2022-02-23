@@ -8,6 +8,7 @@ class AuthenticationService(private val config: AuthenticationConfig) {
         return ClientAuthenticationConfig(
             clientId = config.clientId,
             clientScope = config.clientScope,
+            tokenRefreshMargin = config.tokenRefreshMargin,
             tokenRefreshInterval = config.tokenRefreshInterval,
             authorizationEndpoint = config.authorizationEndpoint,
             tokenEndpoint = config.tokenEndpoint
